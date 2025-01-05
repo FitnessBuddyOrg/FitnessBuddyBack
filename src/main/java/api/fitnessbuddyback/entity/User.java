@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+
 @Entity
 @Data
 @AllArgsConstructor
@@ -21,6 +23,11 @@ public class User {
     private String email;
 
     private String password;
+
+    private LocalDate birthDate;
+
+    @Enumerated(EnumType.STRING)
+    private AuthProvider authProvider;
 
     private String role;
 
