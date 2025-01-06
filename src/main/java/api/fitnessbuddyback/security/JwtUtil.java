@@ -1,5 +1,8 @@
 package api.fitnessbuddyback.security;
 
+
+import com.google.api.client.json.webtoken.JsonWebSignature;
+import com.google.auth.oauth2.TokenVerifier;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
@@ -11,7 +14,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
-
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
@@ -24,6 +28,9 @@ public class JwtUtil {
 
     @Value("${jwt.expiration}")
     private long expiration;
+
+    @Value("${google.client.id}")
+    private String clientId;
 
     public String generateToken(UserDetails userDetails) throws JOSEException {
         List<String> roles = userDetails.getAuthorities().stream()
@@ -75,5 +82,26 @@ public class JwtUtil {
             return null;
         }
     }
+
+
+
+    public String verifyGoogleIdToken(String idToken) {
+        try {
+            TokenVerifier verifier = TokenVerifier.newBuilder()
+                    .setAudience(clientId)
+                    .build();
+
+            JsonWebSignature idTokenObj = verifier.verify(idToken);
+            if (idTokenObj != null) {
+                return idTokenObj.getPayload().getSubject();
+            } else {
+                throw new IllegalArgumentException("Invalid ID token.");
+            }
+        } catch (TokenVerifier.VerificationException e) {
+            throw new IllegalArgumentException("Invalid ID token", e);
+        }
+    }
+
+
 }
 

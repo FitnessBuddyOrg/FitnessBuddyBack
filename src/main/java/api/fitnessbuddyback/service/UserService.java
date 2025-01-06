@@ -15,10 +15,9 @@ public class UserService {
 
     private final UserRepository userRepository;
 
-    public User findByEmail(String username) {
-        return userRepository.findByEmail(username).orElseThrow();
+    public User findByEmail(String email) {
+        return userRepository.findByEmail(email).orElse(null);
     }
-
     public Page<User> findAllUsers(Pageable pageable) {
         return userRepository.findAll(pageable);
     }
