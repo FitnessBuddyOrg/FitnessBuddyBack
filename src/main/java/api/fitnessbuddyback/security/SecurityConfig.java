@@ -39,7 +39,7 @@ public class SecurityConfig {
                 .formLogin(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/login", "/auth/register", "auth/login/oauth2/**").permitAll()
+                        .requestMatchers("/auth/login", "/auth/register", "auth/login/oauth2/**", "/oauth2/authorization/github").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2

@@ -49,6 +49,7 @@ public class AuthService {
         User user = new User();
         user.setEmail(registerDTO.getEmail());
         user.setPassword(passwordEncoder.encode(registerDTO.getPassword()));
+        user.setProvider("LOCAL");
         user.setRole("USER");
         userRepository.save(user);
 
