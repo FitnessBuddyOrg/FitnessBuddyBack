@@ -48,7 +48,7 @@ public class AuthController {
     @PostMapping("/login/oauth2/code/google")
     public ResponseEntity<UserResponseDTO> googleLogin(@RequestBody GoogleTokenRequestDTO idToken) throws JOSEException {
         String email = jwtUtil.verifyGoogleIdToken(idToken.getIdToken());
-
+        System.out.println(email);
         User user = userService.findByEmail(email);
         if (user == null) {
             user = new User();
@@ -59,7 +59,7 @@ public class AuthController {
         }
 
         String token = jwtUtil.generateToken(new CustomUserDetails(email, "", List.of(new SimpleGrantedAuthority("ROLE_USER"))));
-        return ResponseEntity.ok(new UserResponseDTO(token));
+        return ResponseEntity.ok(new UserResponseDTO(token, user.getEmail()));
     }
 
 

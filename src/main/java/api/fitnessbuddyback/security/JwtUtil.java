@@ -93,7 +93,7 @@ public class JwtUtil {
 
             JsonWebSignature idTokenObj = verifier.verify(idToken);
             if (idTokenObj != null) {
-                return idTokenObj.getPayload().getSubject();
+                return (String) idTokenObj.getPayload().get("email");
             } else {
                 throw new IllegalArgumentException("Invalid ID token.");
             }

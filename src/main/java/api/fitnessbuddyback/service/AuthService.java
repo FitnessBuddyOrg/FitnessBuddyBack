@@ -54,7 +54,7 @@ public class AuthService {
 
         final CustomUserDetails userDetails = userDetailsService.loadUserByUsername(user.getEmail());
         final String accessToken = jwtUtil.generateToken(userDetails);
-        return new UserResponseDTO(accessToken);
+        return new UserResponseDTO(accessToken, user.getEmail());
     }
     public UserResponseDTO login(LoginDTO loginDTO) throws JOSEException {
         try {
@@ -65,7 +65,7 @@ public class AuthService {
 
         final CustomUserDetails userDetails = userDetailsService.loadUserByUsername(loginDTO.getEmail());
         final String accessToken = jwtUtil.generateToken(userDetails);
-        return new UserResponseDTO(accessToken);
+        return new UserResponseDTO(accessToken, loginDTO.getEmail());
     }
 
 }
