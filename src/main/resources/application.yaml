@@ -40,7 +40,8 @@ spring:
             client-id: ${GITHUB_CLIENT_ID}
             client-secret: ${GITHUB_CLIENT_SECRET}
             scope: read:user, user:email
-            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            redirect-uri: "https://fitbud.ldelatullaye.fr/login/oauth2/code/github"
+            client-name: GitHub
         provider:
           github:
             authorization-uri: https://github.com/login/oauth/authorize
@@ -53,7 +54,6 @@ spring:
             user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
             user-name-attribute: email
 
-
   mvc:
     log-request-details: true
 
@@ -65,8 +65,9 @@ minio:
 jwt:
   secret: ${JWT_SECRET}
   expiration: ${JWT_EXPIRATION}
+
 logging:
   level:
     root: INFO
     org.springframework.web: DEBUG
-    com.yourpackage: DEBUG
+    api.fitnessbuddyback: DEBUG

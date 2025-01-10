@@ -11,6 +11,8 @@ import api.fitnessbuddyback.service.UserService;
 import com.nimbusds.jose.JOSEException;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -18,14 +20,16 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
-import java.io.IOException;
 
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+
 @RestController
-@RequestMapping("auth/")
 public class AuthController {
 
     @Autowired
@@ -40,17 +44,28 @@ public class AuthController {
     @Autowired
     private UserService userService;
 
-    @PostMapping("login")
+    @Value("${spring.security.oauth2.client.registration.github.client-id}")
+    private String clientId;
+
+    @Value("${spring.security.oauth2.client.registration.github.client-secret}")
+    private String secretId;
+
+    @Value("${spring.security.oauth2.client.registration.github.redirect-uri}")
+    private String redirectUri;
+
+
+
+    @PostMapping("/auth/login")
     public UserResponseDTO login(@RequestBody LoginDTO loginDTO) throws JOSEException {
         return authService.login(loginDTO);
     }
 
-    @PostMapping("register")
+    @PostMapping("/auth/register")
     public UserResponseDTO register(@RequestBody RegisterDTO registerDTO) throws JOSEException {
         return authService.register(registerDTO);
     }
 
-    @PostMapping("/login/oauth2/code/google")
+    @PostMapping("/auth/login/oauth2/code/google")
     public ResponseEntity<UserResponseDTO> googleLogin(@RequestBody GoogleTokenRequestDTO idToken) throws JOSEException {
         String email = jwtUtil.verifyGoogleIdToken(idToken.getIdToken());
 
@@ -68,77 +83,97 @@ public class AuthController {
         return ResponseEntity.ok(new UserResponseDTO(token, user.getEmail()));
     }
 
-    @GetMapping("/oauth2/authorization/github")
-    public void redirectToGitHub(HttpServletResponse response) throws IOException {
-        String clientId = "YOUR_GITHUB_CLIENT_ID"; // Use environment variable or config
-        String redirectUri = "http://localhost:8080/auth/github/callback";
-        String githubAuthUrl = "https://github.com/login/oauth/authorize" +
-                "?client_id=" + clientId +
-                "&redirect_uri=" + redirectUri +
-                "&scope=read:user,user:email";
+    @GetMapping("/login/oauth2/code/github")
+    public void githubLogin(@RequestParam String code, HttpServletResponse response) throws JOSEException, IOException {
+        String accessToken = getAccessTokenFromGitHub(code);
+        String email = getEmailFromGitHub(accessToken);
 
-        response.sendRedirect(githubAuthUrl);
+        User user = userService.findByEmail(email);
+        if (user == null) {
+            user = new User();
+            user.setEmail(email);
+            user.setProvider("GITHUB");
+            user.setRole("USER");
+            userRepository.save(user);
+        }
+
+        String token = jwtUtil.generateToken(new CustomUserDetails(email, "", List.of(new SimpleGrantedAuthority("ROLE_USER"))));
+
+        String redirectUrl = "fitnessbuddy://auth?token=" + URLEncoder.encode(token, StandardCharsets.UTF_8) +
+                "&email=" + URLEncoder.encode(email, StandardCharsets.UTF_8);
+        response.sendRedirect(redirectUrl);
+
     }
 
-    @GetMapping("/github/callback")
-    public ResponseEntity<UserResponseDTO> handleGitHubCallback(@RequestParam("code") String code) {
+
+
+    private String getAccessTokenFromGitHub(String code) {
+        RestTemplate restTemplate = new RestTemplate();
+
+        String tokenUrl = "https://github.com/login/oauth/access_token";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+        headers.add("Accept", "application/json");
+        headers.add("Accept-Encoding", "application/json");
+
+        Map<String, String> body = new HashMap<>();
+        body.put("client_id", clientId);
+        body.put("client_secret", secretId);
+        body.put("code", code);
+        body.put("redirect_uri", redirectUri);
+
+        HttpEntity<Map<String, String>> request = new HttpEntity<>(body, headers);
+
+        ResponseEntity<Map> response;
         try {
-            // Exchange code for access token
-            RestTemplate restTemplate = new RestTemplate();
-            String tokenUri = "https://github.com/login/oauth/access_token";
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.setAccept(List.of(MediaType.APPLICATION_JSON));
-
-            Map<String, String> body = new HashMap<>();
-            body.put("client_id", "YOUR_GITHUB_CLIENT_ID");
-            body.put("client_secret", "YOUR_GITHUB_CLIENT_SECRET");
-            body.put("code", code);
-
-            HttpEntity<Map<String, String>> request = new HttpEntity<>(body, headers);
-            ResponseEntity<Map> tokenResponse = restTemplate.postForEntity(tokenUri, request, Map.class);
-
-            String accessToken = (String) tokenResponse.getBody().get("access_token");
-
-            // Fetch user details from GitHub
-            HttpHeaders userHeaders = new HttpHeaders();
-            userHeaders.setBearerAuth(accessToken);
-
-            HttpEntity<String> userRequest = new HttpEntity<>(userHeaders);
-            ResponseEntity<Map> userResponse = restTemplate.exchange(
-                    "https://api.github.com/user",
-                    HttpMethod.GET,
-                    userRequest,
-                    Map.class
-            );
-
-            String email = (String) userResponse.getBody().get("email");
-
-
-            // Save or update user in database
-            User user = userService.findByEmail(email);
-            if (user == null) {
-                user = new User();
-                user.setEmail(email);
-                user.setProvider("GITHUB");
-                user.setRole("USER");
-                userRepository.save(user);
-            }
-
-            // Generate JWT
-            String token = jwtUtil.generateToken(new CustomUserDetails(email, "", List.of(new SimpleGrantedAuthority("ROLE_USER"))));
-            return ResponseEntity.ok(new UserResponseDTO(token, user.getEmail()));
+            response = restTemplate.postForEntity(tokenUrl, request, Map.class);
 
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+            e.printStackTrace();
+            throw new RuntimeException("Failed to exchange code for access token.", e);
+        }
+
+        if (response.getBody() != null && response.getBody().containsKey("access_token")) {
+            String accessToken = (String) response.getBody().get("access_token");
+            return accessToken;
+        } else {
+            throw new RuntimeException("Failed to retrieve access token from GitHub: " + response.getBody());
         }
     }
 
 
 
+    private String getEmailFromGitHub(String accessToken) {
+        RestTemplate restTemplate = new RestTemplate();
+        String userInfoUrl = "https://api.github.com/user/emails";
 
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(accessToken);
+        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
 
+        HttpEntity<Void> request = new HttpEntity<>(headers);
+        ResponseEntity<List<Map<String, Object>>> response = restTemplate.exchange(
+                userInfoUrl, HttpMethod.GET, request,
+                new ParameterizedTypeReference<List<Map<String, Object>>>() {}
+        );
+
+        if (response.getBody() != null && !response.getBody().isEmpty()) {
+            Map<String, Object> primaryEmail = response.getBody().stream()
+                    .filter(email -> Boolean.TRUE.equals(email.get("primary")))
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("No primary email found"));
+            return (String) primaryEmail.get("email");
+        } else {
+            throw new RuntimeException("Failed to retrieve email from GitHub");
+        }
+    }
+
+    @GetMapping("/login-failed")
+    public ResponseEntity<String> loginFailed(@RequestParam(required = false) String error) {
+        return ResponseEntity.ok("Login failed: " + error);
+    }
 
 
 }
