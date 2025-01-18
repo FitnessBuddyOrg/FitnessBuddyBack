@@ -26,6 +26,9 @@ public class User {
 
     private String provider;
 
+    @Column(nullable = false, columnDefinition = "int default 0")
+    private int appOpenCount;
+
 }
 
 

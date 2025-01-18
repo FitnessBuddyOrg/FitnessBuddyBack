@@ -14,8 +14,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
-import java.io.IOException;
-import java.security.GeneralSecurityException;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
@@ -101,7 +99,6 @@ public class JwtUtil {
             throw new IllegalArgumentException("Invalid ID token", e);
         }
     }
-
 
 }
 
