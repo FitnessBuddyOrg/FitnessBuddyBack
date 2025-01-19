@@ -26,6 +26,8 @@ public class User {
 
     private String provider;
 
+    private String profilePictureUrl;
+
 }
 
 

@@ -94,6 +94,18 @@ public class AuthService {
 
     public UserResponseDTO googleLogin(GoogleTokenRequestDTO idToken) throws JOSEException {
         String email = jwtUtil.verifyGoogleIdToken(idToken.getIdToken());
+        RestTemplate restTemplate = new RestTemplate();
+        String userInfoUrl = "https://www.googleapis.com/oauth2/v3/userinfo";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(idToken.getIdToken());
+        HttpEntity<Void> request = new HttpEntity<>(headers);
+
+        ResponseEntity<Map> response = restTemplate.exchange(
+                userInfoUrl, HttpMethod.GET, request, Map.class
+        );
+
+        String profilePictureUrl = (String) response.getBody().get("picture");
 
         User user = userRepository.findByEmail(email).orElse(null);
         if (user == null) {
@@ -102,6 +114,7 @@ public class AuthService {
             user.setPassword(null);
             user.setProvider("GOOGLE");
             user.setRole("USER");
+            user.setProfilePictureUrl(profilePictureUrl);
             userRepository.save(user);
         }
 
@@ -109,9 +122,10 @@ public class AuthService {
         return new UserResponseDTO(token, user.getEmail(), user.getId());
     }
 
-    public String githubLogin(String code) throws JOSEException, IOException {
+    public String githubLogin(String code) throws JOSEException {
         String accessToken = getAccessTokenFromGitHub(code);
         String email = getEmailFromGitHub(accessToken);
+        String profilePicture = getProfilePictureFromGitHub(accessToken);
 
         User user = userRepository.findByEmail(email).orElse(null);
         if (user == null) {
@@ -119,6 +133,7 @@ public class AuthService {
             user.setEmail(email);
             user.setProvider("GITHUB");
             user.setRole("USER");
+            user.setProfilePictureUrl(profilePicture);
             userRepository.save(user);
         }
 
@@ -186,6 +201,24 @@ public class AuthService {
         } else {
             throw new RuntimeException("Failed to retrieve email from GitHub");
         }
+    }
+
+
+    private String getProfilePictureFromGitHub(String accessToken) {
+        RestTemplate restTemplate = new RestTemplate();
+        String userInfoUrl = "https://api.github.com/user";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(accessToken);
+        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+
+        HttpEntity<Void> request = new HttpEntity<>(headers);
+
+        ResponseEntity<Map> response = restTemplate.exchange(
+                userInfoUrl, HttpMethod.GET, request, Map.class
+        );
+
+        return (String) response.getBody().get("avatar_url");
     }
 
 

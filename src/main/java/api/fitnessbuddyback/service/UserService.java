@@ -10,11 +10,15 @@ import api.fitnessbuddyback.entity.User;
 import api.fitnessbuddyback.mapper.AppOpenMapper;
 import api.fitnessbuddyback.repository.AppOpenRepository;
 import api.fitnessbuddyback.repository.UserRepository;
+import io.minio.MinioClient;
+import io.minio.PutObjectArgs;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -27,6 +31,8 @@ public class UserService {
     private final AppOpenRepository appOpenRepository;
 
     private final AppOpenMapper appOpenMapper;
+
+    private final MinioClient minioClient;
 
     public UserDTO findByEmail(String email) {
         return convertToDTO(userRepository.findByEmail(email).orElse(null));
@@ -68,4 +74,22 @@ public class UserService {
         user.setName(updateUserDTO.getName());
         return convertToDTO(userRepository.save(user));
     }
+
+    public String uploadDefaultProfilePicture(Long userId) throws Exception {
+        String defaultImagePath = "path/to/default/image.jpg";
+        String objectName = "users/" + userId + "/profile-picture.jpg";
+
+        try (InputStream inputStream = new FileInputStream(defaultImagePath)) {
+            minioClient.putObject(
+                    PutObjectArgs.builder()
+                            .bucket("profile-pictures")
+                            .object(objectName)
+                            .stream(inputStream, inputStream.available(), -1)
+                            .contentType("image/jpeg")
+                            .build()
+            );
+            return "https://minio-server/profile-pictures/" + objectName;
+        }
+    }
+
 }
