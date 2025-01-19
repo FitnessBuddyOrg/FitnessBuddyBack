@@ -28,6 +28,8 @@ public class User {
 
     private String profilePictureUrl;
 
+    private Boolean profilePictureFromProvider;
+
 }
 
 

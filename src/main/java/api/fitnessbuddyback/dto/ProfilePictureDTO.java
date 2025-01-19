@@ -2,10 +2,11 @@ package api.fitnessbuddyback.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
 @AllArgsConstructor
-public class GoogleTokenRequestDTO {
-    private String idToken;
-    private String profilePictureUrl;
+public class ProfilePictureDTO {
+    private String url;
 }

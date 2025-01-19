@@ -1,6 +1,7 @@
 package api.fitnessbuddyback.controller;
 
 import api.fitnessbuddyback.dto.AppOpenDTO;
+import api.fitnessbuddyback.dto.ProfilePictureDTO;
 import api.fitnessbuddyback.dto.UpdateUserDTO;
 import api.fitnessbuddyback.dto.UserDTO;
 import api.fitnessbuddyback.entity.AppOpen;
@@ -12,8 +13,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 
 
 @RestController
@@ -57,6 +60,16 @@ public class UserController {
         return userService.patchUser(updateUserDTO);
     }
 
+    @GetMapping("/profile-picture")
+    public ProfilePictureDTO getProfilePicture() {
+        CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return new ProfilePictureDTO(userService.getProfilePicture(userDetails.getUsername()));
+    }
 
+    @PatchMapping("/profile-picture")
+    public ProfilePictureDTO updateProfilePicture(@RequestParam("file") MultipartFile file) {
+        CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return new ProfilePictureDTO(userService.updateProfilePicture(userDetails.getUsername(), file));
+    }
 
 }

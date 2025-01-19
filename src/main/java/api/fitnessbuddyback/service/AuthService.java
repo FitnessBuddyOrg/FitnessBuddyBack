@@ -26,8 +26,6 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-
-import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -76,6 +74,7 @@ public class AuthService {
         user.setPassword(passwordEncoder.encode(registerDTO.getPassword()));
         user.setProvider("LOCAL");
         user.setRole("USER");
+        user.setProfilePictureFromProvider(false);
         userRepository.save(user);
 
         final CustomUserDetails userDetails = userDetailsService.loadUserByUsername(user.getEmail());
@@ -97,18 +96,7 @@ public class AuthService {
 
     public UserResponseDTO googleLogin(GoogleTokenRequestDTO idToken) throws JOSEException {
         String email = jwtUtil.verifyGoogleIdToken(idToken.getIdToken());
-        RestTemplate restTemplate = new RestTemplate();
-        String userInfoUrl = "https://www.googleapis.com/oauth2/v3/userinfo";
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(idToken.getIdToken());
-        HttpEntity<Void> request = new HttpEntity<>(headers);
-
-        ResponseEntity<Map> response = restTemplate.exchange(
-                userInfoUrl, HttpMethod.GET, request, Map.class
-        );
-
-        String profilePictureUrl = (String) response.getBody().get("picture");
+        String profilePictureUrl = idToken.getProfilePictureUrl();
 
         User user = userRepository.findByEmail(email).orElse(null);
         if (user == null) {
@@ -117,7 +105,14 @@ public class AuthService {
             user.setPassword(null);
             user.setProvider("GOOGLE");
             user.setRole("USER");
-            user.setProfilePictureUrl(profilePictureUrl);
+
+            if (profilePictureUrl != null){
+                user.setProfilePictureUrl(profilePictureUrl);
+                user.setProfilePictureFromProvider(true);
+            }
+            else {
+                user.setProfilePictureFromProvider(false);
+            }
             userRepository.save(user);
         }
 
@@ -128,15 +123,25 @@ public class AuthService {
     public String githubLogin(String code) throws JOSEException {
         String accessToken = getAccessTokenFromGitHub(code);
         String email = getEmailFromGitHub(accessToken);
-        String profilePicture = getProfilePictureFromGitHub(accessToken);
+        String profilePictureUrl = getProfilePictureFromGitHub(accessToken);
+
+
 
         User user = userRepository.findByEmail(email).orElse(null);
         if (user == null) {
+
             user = new User();
             user.setEmail(email);
             user.setProvider("GITHUB");
             user.setRole("USER");
-            user.setProfilePictureUrl(profilePicture);
+            if (profilePictureUrl != null){
+                user.setProfilePictureUrl(profilePictureUrl);
+                user.setProfilePictureFromProvider(true);
+            }
+            else {
+                user.setProfilePictureFromProvider(false);
+            }
+
             userRepository.save(user);
         }
 

@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -32,7 +33,7 @@ public class UserService {
 
     private final AppOpenMapper appOpenMapper;
 
-    private final MinioClient minioClient;
+    private final MinioService minioService;
 
     public UserDTO findByEmail(String email) {
         return convertToDTO(userRepository.findByEmail(email).orElse(null));
@@ -75,21 +76,29 @@ public class UserService {
         return convertToDTO(userRepository.save(user));
     }
 
-    public String uploadDefaultProfilePicture(Long userId) throws Exception {
-        String defaultImagePath = "path/to/default/image.jpg";
-        String objectName = "users/" + userId + "/profile-picture.jpg";
+    public String getProfilePicture(String username) {
+        User user = userRepository.findByEmail(username)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        if (user.getProfilePictureUrl() != null) {
+            if (user.getProfilePictureFromProvider()) {
+                return user.getProfilePictureUrl();
+            }
+            else
+            {
+                return minioService.getProfilePictureUrl(user);
+            }
 
-        try (InputStream inputStream = new FileInputStream(defaultImagePath)) {
-            minioClient.putObject(
-                    PutObjectArgs.builder()
-                            .bucket("profile-pictures")
-                            .object(objectName)
-                            .stream(inputStream, inputStream.available(), -1)
-                            .contentType("image/jpeg")
-                            .build()
-            );
-            return "https://minio-server/profile-pictures/" + objectName;
         }
+        return null;
     }
 
+    public String updateProfilePicture(String username, MultipartFile file) {
+        User user = userRepository.findByEmail(username)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        minioService.uploadProfilePicture(file, user);
+        user.setProfilePictureFromProvider(false);
+        user.setProfilePictureUrl("users/" + user.getId() + "/profile-picture.jpg");
+        userRepository.save(user);
+        return minioService.getProfilePictureUrl(user);
+    }
 }
