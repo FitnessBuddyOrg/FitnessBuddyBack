@@ -77,7 +77,7 @@ public class AuthService {
 
         final CustomUserDetails userDetails = userDetailsService.loadUserByUsername(user.getEmail());
         final String accessToken = jwtUtil.generateToken(userDetails);
-        return new UserResponseDTO(accessToken, user.getEmail());
+        return new UserResponseDTO(accessToken, user.getEmail(), user.getId());
     }
     public UserResponseDTO login(LoginDTO loginDTO) throws JOSEException {
         try {
@@ -88,7 +88,8 @@ public class AuthService {
 
         final CustomUserDetails userDetails = userDetailsService.loadUserByUsername(loginDTO.getEmail());
         final String accessToken = jwtUtil.generateToken(userDetails);
-        return new UserResponseDTO(accessToken, loginDTO.getEmail());
+        Long userId = userRepository.findByEmail(loginDTO.getEmail()).get().getId();
+        return new UserResponseDTO(accessToken, loginDTO.getEmail(), userId);
     }
 
     public UserResponseDTO googleLogin(GoogleTokenRequestDTO idToken) throws JOSEException {
@@ -105,7 +106,7 @@ public class AuthService {
         }
 
         String token = jwtUtil.generateToken(new CustomUserDetails(email, "", List.of(new SimpleGrantedAuthority("ROLE_USER"))));
-        return new UserResponseDTO(token, user.getEmail());
+        return new UserResponseDTO(token, user.getEmail(), user.getId());
     }
 
     public String githubLogin(String code) throws JOSEException, IOException {
@@ -123,7 +124,7 @@ public class AuthService {
 
         String token = jwtUtil.generateToken(new CustomUserDetails(email, "", List.of(new SimpleGrantedAuthority("ROLE_USER"))));
         return "fitnessbuddy://auth?token=" + URLEncoder.encode(token, StandardCharsets.UTF_8) +
-                "&email=" + URLEncoder.encode(email, StandardCharsets.UTF_8);
+                "&email=" + URLEncoder.encode(email, StandardCharsets.UTF_8)+ "&id=" + URLEncoder.encode(user.getId().toString(), StandardCharsets.UTF_8);
     }
 
     private String getAccessTokenFromGitHub(String code) {

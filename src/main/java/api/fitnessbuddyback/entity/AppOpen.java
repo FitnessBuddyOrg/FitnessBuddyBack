@@ -5,29 +5,22 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "users")
-public class User {
+@Table(name = "app_opens")
+public class AppOpen {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String name;
+    @ManyToOne(fetch = FetchType.LAZY)
+    private User user;
 
-    @Column(unique = true)
-    private String email;
-
-    private String password;
-
-    private String role;
-
-    private String provider;
+    private LocalDateTime openTime;
 
 }
-
-
-
-

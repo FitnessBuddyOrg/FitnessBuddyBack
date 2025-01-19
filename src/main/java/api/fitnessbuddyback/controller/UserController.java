@@ -1,6 +1,9 @@
 package api.fitnessbuddyback.controller;
 
+import api.fitnessbuddyback.dto.AppOpenDTO;
+import api.fitnessbuddyback.dto.UpdateUserDTO;
 import api.fitnessbuddyback.dto.UserDTO;
+import api.fitnessbuddyback.entity.AppOpen;
 import api.fitnessbuddyback.security.CustomUserDetails;
 import api.fitnessbuddyback.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,6 +12,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 
 @RestController
@@ -42,10 +47,16 @@ public class UserController {
         userService.incrementAppOpenCount(userId);
     }
 
-    @GetMapping("/{userId}/app-open-count")
-    public ResponseEntity<Integer> getAppOpenCount(@PathVariable Long userId) {
-        int count = userService.getAppOpenCount(userId);
-        return ResponseEntity.ok(count);
+    @GetMapping("/app-open-count/{userId}")
+    public ResponseEntity<List<AppOpenDTO>> getAppOpenCount(@PathVariable Long userId) {
+        return ResponseEntity.ok(userService.getAppOpenCount(userId));
     }
+
+    @PatchMapping("/patch")
+    public UserDTO patchUser(@RequestBody UpdateUserDTO updateUserDTO) {
+        return userService.patchUser(updateUserDTO);
+    }
+
+
 
 }

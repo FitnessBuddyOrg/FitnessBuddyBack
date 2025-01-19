@@ -2,19 +2,31 @@ package api.fitnessbuddyback.service;
 
 
 
+import api.fitnessbuddyback.dto.AppOpenDTO;
+import api.fitnessbuddyback.dto.UpdateUserDTO;
 import api.fitnessbuddyback.dto.UserDTO;
+import api.fitnessbuddyback.entity.AppOpen;
 import api.fitnessbuddyback.entity.User;
+import api.fitnessbuddyback.mapper.AppOpenMapper;
+import api.fitnessbuddyback.repository.AppOpenRepository;
 import api.fitnessbuddyback.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class UserService {
 
     private final UserRepository userRepository;
+
+    private final AppOpenRepository appOpenRepository;
+
+    private final AppOpenMapper appOpenMapper;
 
     public UserDTO findByEmail(String email) {
         return convertToDTO(userRepository.findByEmail(email).orElse(null));
@@ -38,14 +50,22 @@ public class UserService {
     public void incrementAppOpenCount(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
-        user.setAppOpenCount(user.getAppOpenCount() + 1);
-        userRepository.save(user);
+        AppOpen appOpen = new AppOpen();
+        appOpen.setUser(user);
+        appOpen.setOpenTime(LocalDateTime.now());
+        appOpenRepository.save(appOpen);
     }
 
-    public int getAppOpenCount(Long userId) {
+    public List<AppOpenDTO> getAppOpenCount(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
-        return user.getAppOpenCount();
+        return appOpenMapper.toDTO(appOpenRepository.findByUserId(user.getId()));
     }
 
+    public UserDTO patchUser(UpdateUserDTO updateUserDTO) {
+        User user = userRepository.findById(updateUserDTO.getId())
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        user.setName(updateUserDTO.getName());
+        return convertToDTO(userRepository.save(user));
+    }
 }

@@ -2,11 +2,12 @@ package api.fitnessbuddyback.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @AllArgsConstructor
-public class UserResponseDTO {
-    private String accessToken;
-    private String email;
+@NoArgsConstructor
+public class UpdateUserDTO {
     private Long id;
+    private String name;
 }
