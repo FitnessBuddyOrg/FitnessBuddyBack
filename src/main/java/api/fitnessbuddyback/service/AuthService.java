@@ -62,12 +62,15 @@ public class AuthService {
 
 
     public UserResponseDTO register(RegisterDTO registerDTO) throws JOSEException {
-        if (!registerDTO.getPassword().equals(registerDTO.getConfirmPassword())) {
-            throw new PasswordMismatchException();
-        }
+
         if (userRepository.findByEmail(registerDTO.getEmail()).isPresent()) {
             throw new UserAlreadyExistsException(registerDTO.getEmail());
         }
+
+        if (!registerDTO.getPassword().equals(registerDTO.getConfirmPassword())) {
+            throw new PasswordMismatchException();
+        }
+
         User user = new User();
         user.setEmail(registerDTO.getEmail());
         user.setPassword(passwordEncoder.encode(registerDTO.getPassword()));
