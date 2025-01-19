@@ -11,8 +11,15 @@ import java.util.Collection;
 @EqualsAndHashCode(callSuper = true)
 public class CustomUserDetails extends User {
 
-    public CustomUserDetails(String username, String password, Collection<? extends GrantedAuthority> authorities) {
-        super(username, password, authorities);
+    private final String provider;
+
+    public CustomUserDetails(String username, String password, Collection<? extends GrantedAuthority> authorities, String provider) {
+        super(username, password != null ? password : "", authorities);
+        this.provider = provider;
     }
 
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return !"LOCAL".equals(provider) || super.isCredentialsNonExpired();
+    }
 }

@@ -118,7 +118,7 @@ public class AuthService {
             userRepository.save(user);
         }
 
-        String token = jwtUtil.generateToken(new CustomUserDetails(email, "", List.of(new SimpleGrantedAuthority("ROLE_USER"))));
+        String token = jwtUtil.generateToken(new CustomUserDetails(email, "", List.of(new SimpleGrantedAuthority("ROLE_USER")), user.getProvider()));
         return new UserResponseDTO(token, user.getEmail(), user.getId());
     }
 
@@ -137,7 +137,7 @@ public class AuthService {
             userRepository.save(user);
         }
 
-        String token = jwtUtil.generateToken(new CustomUserDetails(email, "", List.of(new SimpleGrantedAuthority("ROLE_USER"))));
+        String token = jwtUtil.generateToken(new CustomUserDetails(email, "", List.of(new SimpleGrantedAuthority("ROLE_USER")), user.getProvider()));
         return "fitnessbuddy://auth?token=" + URLEncoder.encode(token, StandardCharsets.UTF_8) +
                 "&email=" + URLEncoder.encode(email, StandardCharsets.UTF_8)+ "&id=" + URLEncoder.encode(user.getId().toString(), StandardCharsets.UTF_8);
     }
