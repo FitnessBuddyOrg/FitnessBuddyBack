@@ -1,10 +1,13 @@
 package api.fitnessbuddyback.controller;
 
+import api.fitnessbuddyback.dto.AllLanguageTemplateExerciseDTO;
 import api.fitnessbuddyback.dto.ShareExerciseDTO;
+import api.fitnessbuddyback.dto.TemplateExerciseDTO;
 import api.fitnessbuddyback.service.ExerciseService;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("exercise")
@@ -21,6 +24,11 @@ public class ExerciseController {
     @GetMapping("/share")
     public ShareExerciseDTO getSharedExercise(@RequestParam String token) {
         return exerciseService.getExerciseByShareToken(token);
+    }
+
+    @GetMapping("/templates")
+    public List<TemplateExerciseDTO> getTemplateExercises() {
+        return exerciseService.getTemplateExercises();
     }
 
 }

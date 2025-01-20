@@ -1,5 +1,6 @@
 package api.fitnessbuddyback.service;
 
+import api.fitnessbuddyback.dto.AllLanguageTemplateExerciseDTO;
 import api.fitnessbuddyback.dto.ShareExerciseDTO;
 import api.fitnessbuddyback.dto.TemplateExerciseDTO;
 import api.fitnessbuddyback.entity.Exercise;
@@ -7,8 +8,8 @@ import api.fitnessbuddyback.repository.ExerciseRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -41,4 +42,18 @@ public class ExerciseService {
         return UUID.randomUUID().toString();
     }
 
+
+    public List<TemplateExerciseDTO> getTemplateExercises() {
+        List<Exercise> templateExercises = exerciceRepository.findByIsTemplateTrue().orElse(Collections.emptyList());
+
+        return templateExercises.stream()
+                .map(exercise -> TemplateExerciseDTO.builder()
+                        .name(exercise.getName())
+                        .instructions(exercise.getInstructions())
+                        .videoLink(exercise.getVideoLink())
+                        .category(exercise.getCategory())
+                        .language(exercise.getLanguage())
+                        .build())
+                .collect(Collectors.toList());
+    }
 }
