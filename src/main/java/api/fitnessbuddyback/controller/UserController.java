@@ -55,6 +55,11 @@ public class UserController {
         return ResponseEntity.ok(userService.getAppOpenCount(userId));
     }
 
+    @GetMapping("/app-open-count/all")
+    public ResponseEntity<List<AppOpenDTO>> getAllAppOpenCounts() {
+        return ResponseEntity.ok(userService.getAllAppOpenCounts());
+    }
+
     @PatchMapping("/patch")
     public UserDTO patchUser(@RequestBody UpdateUserDTO updateUserDTO) {
         return userService.patchUser(updateUserDTO);

@@ -1,7 +1,7 @@
 package api.fitnessbuddyback.controller;
 
-import api.fitnessbuddyback.dto.AllLanguageTemplateExerciseDTO;
 import api.fitnessbuddyback.dto.ShareExerciseDTO;
+import api.fitnessbuddyback.dto.ShareExerciseResponseDTO;
 import api.fitnessbuddyback.dto.TemplateExerciseDTO;
 import api.fitnessbuddyback.service.ExerciseService;
 import lombok.RequiredArgsConstructor;
@@ -17,12 +17,13 @@ public class ExerciseController {
     private final ExerciseService exerciseService;
 
     @PostMapping("/share")
-    public String shareExercise(@RequestBody ShareExerciseDTO shareExerciseDTO) {
-        return exerciseService.shareExercise(shareExerciseDTO);
+    public ShareExerciseResponseDTO shareExercise(@RequestBody ShareExerciseDTO shareExerciseDTO) {
+        String token = exerciseService.shareExercise(shareExerciseDTO);
+        return new ShareExerciseResponseDTO(token);
     }
 
-    @GetMapping("/share")
-    public ShareExerciseDTO getSharedExercise(@RequestParam String token) {
+    @GetMapping("/share/{token}")
+    public ShareExerciseDTO getSharedExercise(@PathVariable String token) {
         return exerciseService.getExerciseByShareToken(token);
     }
 

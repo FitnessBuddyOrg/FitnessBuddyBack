@@ -22,6 +22,7 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -66,7 +67,10 @@ public class UserService {
     public List<AppOpenDTO> getAppOpenCount(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
-        return appOpenMapper.toDTO(appOpenRepository.findByUserId(user.getId()));
+        LocalDateTime oneWeekAgo = LocalDateTime.now().minusWeeks(1);
+        return appOpenMapper.toDTO(appOpenRepository.findByUserId(user.getId())).stream()
+                .filter(appOpenDTO -> appOpenDTO.getOpenTime().isAfter(oneWeekAgo))
+                .toList();
     }
 
     public UserDTO patchUser(UpdateUserDTO updateUserDTO) {
@@ -100,5 +104,12 @@ public class UserService {
         user.setProfilePictureUrl("users/" + user.getId() + "/profile-picture.jpg");
         userRepository.save(user);
         return minioService.getProfilePictureUrl(user);
+    }
+
+    public List<AppOpenDTO> getAllAppOpenCounts() {
+        LocalDateTime oneWeekAgo = LocalDateTime.now().minusWeeks(1).minusDays(1);
+        return appOpenMapper.toDTO(appOpenRepository.findAll()).stream()
+                .filter(appOpenDTO -> appOpenDTO.getOpenTime().isAfter(oneWeekAgo))
+                .toList();
     }
 }

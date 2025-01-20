@@ -4,6 +4,7 @@ import api.fitnessbuddyback.dto.AllLanguageTemplateExerciseDTO;
 import api.fitnessbuddyback.dto.ShareExerciseDTO;
 import api.fitnessbuddyback.dto.TemplateExerciseDTO;
 import api.fitnessbuddyback.entity.Exercise;
+import api.fitnessbuddyback.exeption.TokenNotFoundException;
 import api.fitnessbuddyback.repository.ExerciseRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -35,7 +36,7 @@ public class ExerciseService {
                         .videoLink(exercise.getVideoLink())
                         .category(exercise.getCategory())
                         .build())
-                .orElse(null);
+                .orElseThrow(() -> new TokenNotFoundException("Token not found: " + shareToken));
     }
 
     public String createShareToken() {
