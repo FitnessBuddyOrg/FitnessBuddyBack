@@ -91,6 +91,7 @@ public class UserService {
     public String updateProfilePicture(String username, MultipartFile file) {
         User user = userRepository.findByEmail(username)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        System.out.println(file.getName());
         minioService.uploadProfilePicture(file, user);
         user.setProfilePictureFromProvider(false);
         user.setProfilePictureUrl("users/" + user.getId() + "/profile-picture.jpg");
