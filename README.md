@@ -1,4 +1,4 @@
-# FitnessBuddyBack 🏋️‍♂️
+# FitnessBuddy Backend 🏋️‍♂️
 
 Welcome to the FitnessBuddyBack project! This is a backend service for a fitness application built with Java and Spring Boot. It provides various functionalities such as user authentication, exercise sharing, and routine tracking.
 
