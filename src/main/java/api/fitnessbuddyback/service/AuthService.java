@@ -116,7 +116,7 @@ public class AuthService {
             userRepository.save(user);
         }
 
-        String token = jwtUtil.generateToken(new CustomUserDetails(email, "", List.of(new SimpleGrantedAuthority("ROLE_USER")), user.getProvider()));
+        String token = jwtUtil.generateToken(new CustomUserDetails(email, "", List.of(new SimpleGrantedAuthority("ROLE_"+user.getRole())), user.getProvider()));
         return new UserResponseDTO(token, user.getEmail(), user.getId());
     }
 

@@ -1,9 +1,6 @@
 package api.fitnessbuddyback.controller;
 
-import api.fitnessbuddyback.dto.AppOpenDTO;
-import api.fitnessbuddyback.dto.ProfilePictureDTO;
-import api.fitnessbuddyback.dto.UpdateUserDTO;
-import api.fitnessbuddyback.dto.UserDTO;
+import api.fitnessbuddyback.dto.*;
 import api.fitnessbuddyback.entity.AppOpen;
 import api.fitnessbuddyback.security.CustomUserDetails;
 import api.fitnessbuddyback.service.UserService;
@@ -75,6 +72,25 @@ public class UserController {
     public ProfilePictureDTO updateProfilePicture(@RequestParam("file") MultipartFile file) {
         CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         return new ProfilePictureDTO(userService.updateProfilePicture(userDetails.getUsername(), file));
+    }
+
+    @PostMapping("/add-completed-routine")
+    public void addCompletedRoutine() {
+        CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Long userId = userService.findByEmail(userDetails.getUsername()).getId();
+        userService.addCompletedRoutine(userId);
+    }
+
+    @GetMapping("/completed-routines")
+    public ResponseEntity<List<RoutineDTO>> getCompletedRoutines() {
+        CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Long userId = userService.findByEmail(userDetails.getUsername()).getId();
+        return ResponseEntity.ok(userService.getRoutineCount(userId));
+    }
+
+    @GetMapping("/completed-routines/all")
+    public ResponseEntity<List<RoutineDTO>> getAllCompletedRoutines() {
+        return ResponseEntity.ok(userService.getAllRoutineCounts());
     }
 
 }

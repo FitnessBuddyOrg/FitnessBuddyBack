@@ -3,12 +3,16 @@ package api.fitnessbuddyback.service;
 
 
 import api.fitnessbuddyback.dto.AppOpenDTO;
+import api.fitnessbuddyback.dto.RoutineDTO;
 import api.fitnessbuddyback.dto.UpdateUserDTO;
 import api.fitnessbuddyback.dto.UserDTO;
 import api.fitnessbuddyback.entity.AppOpen;
+import api.fitnessbuddyback.entity.Routine;
 import api.fitnessbuddyback.entity.User;
 import api.fitnessbuddyback.mapper.AppOpenMapper;
+import api.fitnessbuddyback.mapper.RoutineMapper;
 import api.fitnessbuddyback.repository.AppOpenRepository;
+import api.fitnessbuddyback.repository.RoutineRepository;
 import api.fitnessbuddyback.repository.UserRepository;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
@@ -32,7 +36,11 @@ public class UserService {
 
     private final AppOpenRepository appOpenRepository;
 
+    private final RoutineRepository routineRepository;
+
     private final AppOpenMapper appOpenMapper;
+
+    private final RoutineMapper routineMapper;
 
     private final MinioService minioService;
 
@@ -55,23 +63,7 @@ public class UserService {
         return users.map(this::convertToDTO);
     }
 
-    public void incrementAppOpenCount(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
-        AppOpen appOpen = new AppOpen();
-        appOpen.setUser(user);
-        appOpen.setOpenTime(LocalDateTime.now());
-        appOpenRepository.save(appOpen);
-    }
 
-    public List<AppOpenDTO> getAppOpenCount(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
-        LocalDateTime oneWeekAgo = LocalDateTime.now().minusWeeks(1);
-        return appOpenMapper.toDTO(appOpenRepository.findByUserId(user.getId())).stream()
-                .filter(appOpenDTO -> appOpenDTO.getOpenTime().isAfter(oneWeekAgo))
-                .toList();
-    }
 
     public UserDTO patchUser(UpdateUserDTO updateUserDTO) {
         User user = userRepository.findById(updateUserDTO.getId())
@@ -106,10 +98,55 @@ public class UserService {
         return minioService.getProfilePictureUrl(user);
     }
 
+    public void incrementAppOpenCount(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        AppOpen appOpen = new AppOpen();
+        appOpen.setUser(user);
+        appOpen.setOpenTime(LocalDateTime.now());
+        appOpenRepository.save(appOpen);
+    }
+
+    public List<AppOpenDTO> getAppOpenCount(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        LocalDateTime oneWeekAgo = LocalDateTime.now().minusWeeks(1);
+        return appOpenMapper.toDTO(appOpenRepository.findByUserId(user.getId())).stream()
+                .filter(appOpenDTO -> appOpenDTO.getOpenTime().isAfter(oneWeekAgo))
+                .toList();
+    }
+
     public List<AppOpenDTO> getAllAppOpenCounts() {
         LocalDateTime oneWeekAgo = LocalDateTime.now().minusWeeks(1).minusDays(1);
         return appOpenMapper.toDTO(appOpenRepository.findAll()).stream()
                 .filter(appOpenDTO -> appOpenDTO.getOpenTime().isAfter(oneWeekAgo))
                 .toList();
     }
+
+    public void addCompletedRoutine(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        Routine routine = new Routine();
+        routine.setUser(user);
+        routine.setCompletedTime(LocalDateTime.now());
+        routineRepository.save(routine);
+    }
+
+    public List<RoutineDTO> getRoutineCount(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        LocalDateTime oneWeekAgo = LocalDateTime.now().minusWeeks(1);
+        return routineMapper.toDTO(routineRepository.findByUserId(user.getId())).stream()
+                .filter(routineDTO -> routineDTO.getCompletedTime().isAfter(oneWeekAgo))
+                .toList();
+    }
+
+    public List<RoutineDTO> getAllRoutineCounts() {
+        LocalDateTime oneWeekAgo = LocalDateTime.now().minusWeeks(1).minusDays(1);
+        return routineMapper.toDTO(routineRepository.findAll()).stream()
+                .filter(routineDTO -> routineDTO.getCompletedTime().isAfter(oneWeekAgo))
+                .toList();
+    }
+
+
 }
